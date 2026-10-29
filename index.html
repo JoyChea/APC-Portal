@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="A personal timetable and APC portal link finder, hosted as a simple web app.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <title>Portal · School dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <script>
+    try {
+      const savedTheme = localStorage.getItem('portal-web-theme-v1');
+      if (savedTheme === 'light' || savedTheme === 'dark') document.documentElement.dataset.theme = savedTheme;
+    } catch {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=5">
+  <script src="calendar.js?v=1" defer></script>
+  <script src="app.js?v=7" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#home" aria-label="Portal home">
+      <span class="brand-mark">P</span>
+      <span>Portal<span class="brand-dot">.</span></span>
+    </a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <button class="nav-button active" data-view="home">Dashboard</button>
+      <button class="nav-button" data-view="finder">Portal link finder</button>
+      <button class="nav-button" data-view="settings">Subjects &amp; timetable</button>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch color theme" aria-pressed="false"><span id="themeToggleIcon" aria-hidden="true">◐</span><span class="theme-toggle-label" id="themeToggleLabel">Theme</span></button>
+    <div class="topbar-meta"><span class="online-dot"></span><span id="catalogStatus">Loading catalogue…</span><span class="top-date" id="todayDate"></span></div>
+  </header>
+
+  <main class="app-shell">
+    <section class="view" id="view-home">
+      <div class="welcome-row">
+        <div>
+          <p class="eyebrow">YOUR SCHOOL DAY</p>
+          <h1 id="greeting">Welcome to Portal</h1>
+          <p class="subheading">Your timetable and course links, all in one place.</p>
+        </div>
+        <div class="welcome-actions">
+          <button class="button button-secondary" id="installAppButton">⌂ <span>Add to Home Screen</span></button>
+          <button class="button button-secondary" data-open-settings>⚙ <span>Subjects &amp; timetable</span></button>
+        </div>
+      </div>
+      <div class="now-next-grid">
+        <article class="status-card now-card"><div class="card-label"><span class="live-pulse"></span> NOW <span id="nowTime" class="muted"></span></div><div id="nowTitle" class="status-title">Loading…</div><div id="nowSubtitle" class="status-subtitle"></div><a id="nowLink" class="text-link" target="_blank" rel="noopener noreferrer" hidden>Open current link ↗</a></article>
+        <article class="status-card next-card"><div class="card-label">NEXT <span id="nextTime" class="muted"></span></div><div id="nextTitle" class="status-title">—</div><div id="nextSubtitle" class="status-subtitle"></div><a id="nextLink" class="text-link" target="_blank" rel="noopener noreferrer" hidden>Open course link ↗</a></article>
+      </div>
+      <section class="section-block">
+        <div class="section-heading"><div><p class="eyebrow">QUICK ACCESS</p><h2>Your subjects</h2></div><button class="text-button" data-open-settings>Manage subjects <span>→</span></button></div>
+        <div id="shortcutGrid" class="shortcut-grid"></div>
+      </section>
+      <section class="section-block today-block">
+        <div class="section-heading"><div><p class="eyebrow">MONDAY – FRIDAY</p><h2>Weekly timetable</h2></div><div class="section-actions"><button class="text-button" id="exportCalendarButton">＋ Add to calendar</button><button class="text-button" data-view="settings">Edit timetable <span>→</span></button></div></div>
+        <div class="timetable-scroll home-timetable-scroll"><table class="timetable" id="homeTimetable"><thead></thead><tbody></tbody></table></div>
+        <div class="timetable-hint">This full-week calendar stays on your dashboard. On small screens, swipe sideways to see each day.</div>
+      </section>
+      <footer class="app-footer"><span>Portal Link Finder searches the bundled APC crawl.</span><button class="text-button" data-view="finder">Find a portal page →</button></footer>
+    </section>
+
+    <section class="view" id="view-finder" hidden>
+      <div class="page-heading"><div><p class="eyebrow">20,000+ APC PAGES</p><h1>Portal link finder</h1><p class="subheading">Search course pages, lessons, topics and words in the link.</p></div><div class="snapshot-pill"><span class="online-dot"></span><span id="snapshotSummary">Loading local catalogue…</span></div></div>
+      <form id="finderForm" class="finder-form"><label class="sr-only" for="finderQuery">Search the APC portal catalogue</label><span class="search-icon">⌕</span><input id="finderQuery" autocomplete="off" placeholder="Try “Year 9 drama monologue” or “U4 Specialist Maths”"><button class="button button-primary" type="submit">Search</button></form>
+      <div class="finder-tools"><p id="finderMessage" class="muted">Results link directly to pages found in the bundled catalogue.</p><span id="resultCount" class="result-count"></span></div>
+      <div id="finderResults" class="result-list"></div>
+      <div id="finderEmpty" class="empty-state" hidden><span class="empty-icon">⌕</span><h3>No matching pages</h3><p>Try fewer words or a subject name.</p></div>
+    </section>
+
+    <section class="view" id="view-settings" hidden>
+      <div class="page-heading"><div><p class="eyebrow">MAKE IT YOURS</p><h1>Subjects &amp; timetable</h1><p class="subheading">Choose subjects from the catalogue, edit their links, and set your weekly schedule.</p></div><button class="button button-secondary" data-view="home">← Dashboard</button></div>
+      <div class="settings-layout">
+        <section class="panel subject-panel"><div class="panel-heading"><div><h2>Selected subjects</h2><p>Each course homepage is linked from the APC catalogue.</p></div><button class="button button-primary button-small" id="addSubjectButton">＋ Add subjects</button></div><div id="subjectEditorList" class="subject-editor-list"></div><div id="noSubjectsNotice" class="inline-empty" hidden><span>Choose a subject to build your dashboard.</span></div></section>
+        <section class="panel timetable-panel"><div class="panel-heading"><div><h2>Weekly timetable</h2><p>Tap a period to search by year, subject or level.</p></div><button class="text-button" id="exportCalendarSettingsButton">＋ Add to calendar</button></div><div class="timetable-scroll"><table class="timetable" id="timetable"><thead></thead><tbody></tbody></table></div><div class="timetable-hint">On smaller screens, scroll the timetable sideways.</div></section>
+        <section class="panel shortcut-panel"><div class="panel-heading"><div><h2>Dashboard shortcuts</h2><p>Choose up to six subjects for quick access.</p></div></div><div id="shortcutEditor" class="shortcut-editor"></div></section>
+        <section class="panel privacy-panel"><div class="panel-heading"><div><h2>Browser data</h2><p>Your subject choices, timetable and custom links are saved in this browser only.</p></div><button id="resetButton" class="button button-danger-outline button-small">Reset local preferences</button></div><div class="note-line"><span class="note-icon">i</span><span>The Finder uses the bundled catalogue. Changes you make here are not sent to the web server.</span></div></section>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="pickerDialog" class="dialog picker-dialog">
+    <form method="dialog" class="dialog-frame">
+      <div class="dialog-header"><div><p class="eyebrow" id="pickerEyebrow">SUBJECT CATALOGUE</p><h2 id="pickerTitle">Choose subjects</h2></div><button class="icon-button" value="cancel" aria-label="Close subject picker">×</button></div>
+      <p id="pickerDescription" class="dialog-description">Select the year, subject and study level options you need.</p>
+      <label class="search-field picker-search"><span class="search-icon">⌕</span><input id="pickerSearch" type="search" placeholder="Search year, subject or level"></label>
+      <div id="pickerList" class="picker-list"></div>
+      <div class="dialog-footer"><span id="pickerSelectionCount" class="muted">No subjects selected</span><button id="pickerAction" class="button button-primary" type="button" disabled>Add subjects</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="assignDialog" class="dialog compact-dialog">
+    <div class="dialog-frame"><div class="dialog-header"><div><p class="eyebrow">WEEKLY TIMETABLE</p><h2 id="assignTitle">Choose a subject</h2></div><button class="icon-button" data-close-dialog="assignDialog" aria-label="Close">×</button></div><label class="search-field"><span class="search-icon">⌕</span><input id="assignSearch" type="search" placeholder="Search year, subject or level"></label><div id="assignList" class="assign-list"></div></div>
+  </dialog>
+
+  <dialog id="saveLinkDialog" class="dialog compact-dialog">
+    <div class="dialog-frame"><div class="dialog-header"><div><p class="eyebrow">SAVE CURRENT LINK</p><h2>Choose a subject</h2></div><button class="icon-button" data-close-dialog="saveLinkDialog" aria-label="Close">×</button></div><p class="dialog-description" id="saveLinkTitle"></p><label class="field-label" for="saveLinkSubject">Save this page for</label><select id="saveLinkSubject" class="select-input"></select><div class="dialog-footer right"><button class="button button-secondary" data-close-dialog="saveLinkDialog">Cancel</button><button id="confirmSaveLink" class="button button-primary">Set current link</button></div></div>
+  </dialog>
+
+  <dialog id="resetDialog" class="dialog compact-dialog">
+    <div class="dialog-frame"><div class="dialog-header"><div><p class="eyebrow">BROWSER DATA</p><h2>Reset local preferences?</h2></div><button class="icon-button" data-close-dialog="resetDialog" aria-label="Close">×</button></div><p class="dialog-description">This removes the subjects, timetable, shortcuts and custom page links saved in this browser. The catalogue is not removed.</p><div class="dialog-footer right"><button class="button button-secondary" data-close-dialog="resetDialog">Cancel</button><button id="confirmReset" class="button button-danger">Reset preferences</button></div></div>
+  </dialog>
+
+  <dialog id="installDialog" class="dialog compact-dialog">
+    <div class="dialog-frame"><div class="dialog-header"><div><p class="eyebrow">PORTAL ON YOUR DEVICE</p><h2>Add Portal to Home Screen</h2></div><button class="icon-button" data-close-dialog="installDialog" aria-label="Close">×</button></div>
+      <p class="dialog-description">Install Portal as an app shortcut so it opens from your Home Screen.</p>
+      <ol class="install-steps"><li><strong>iPhone or iPad:</strong> open this page in Safari, tap <strong>Share</strong>, choose <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>.</li><li><strong>Android:</strong> open your browser menu and choose <strong>Install app</strong> or <strong>Add to Home Screen</strong>.</li><li><strong>Computer:</strong> use the install icon in your browser’s address bar or menu if it is available.</li></ol>
+      <p class="dialog-description install-note">For full install and offline support, host Portal over HTTPS. Your timetable remains saved in this browser.</p>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <noscript><div class="noscript">Portal Web needs JavaScript enabled to load the searchable catalogue.</div></noscript>
+</body>
+</html>
